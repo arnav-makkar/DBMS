@@ -56,37 +56,6 @@ st.markdown("""
         background-color: #0e1117;
         color: #FFFFFF;
     }
-    /* Make only the sidebar (Login area) custom styled */
-    section[data-testid="stSidebar"] {
-        background-color: #1B1F3B;  /* dark blue-gray tone */
-        color: #ffffff;
-        padding: 1rem;
-        border-right: 2px solid #333;
-    }
-
-    /* Style text input fields inside sidebar */
-    section[data-testid="stSidebar"] input {
-        background-color: #111524;
-        color: #ffffff;
-        border: 1px solid #444;
-        border-radius: 6px;
-    }
-
-    /* Style Login button inside sidebar */
-    section[data-testid="stSidebar"] .stButton>button {
-        background-color: #50C878;  /* Emerald green */
-        color: white;
-        font-weight: bold;
-        border-radius: 6px;
-        border: none;
-        padding: 8px 16px;
-    }
-
-    section[data-testid="stSidebar"] .stButton>button:hover {
-        background-color: #3FA96C;
-    }
-
-
     </style>
 """, unsafe_allow_html=True)
 
