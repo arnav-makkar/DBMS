@@ -832,6 +832,99 @@ def apply_for_sharing(conn, customer, room_id):
     except Exception as e:
         st.error(f"Error in applying for sharing: {e}")
 
+def sign_up(conn):
+    st.title("📝 Sign Up")
+    st.markdown("---")
+    
+    # Create tabs for different user types
+    tab1, tab2 = st.tabs(["👤 Customer", "🏠 Homeowner"])
+    
+    with tab1:
+        st.subheader("Customer Registration")
+        with st.form("customer_signup_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            first_name = st.text_input("First Name")
+            last_name = st.text_input("Last Name")
+            email = st.text_input("Email")
+            phone = st.text_input("Phone Number")
+            
+            if st.form_submit_button("Sign Up as Customer"):
+                if not username or not password or not confirm_password or not first_name or not last_name or not email or not phone:
+                    st.error("All fields are required.")
+                elif password != confirm_password:
+                    st.error("Passwords do not match.")
+                else:
+                    try:
+                        # Check if username already exists
+                        cur = conn.cursor()
+                        cur.execute("SELECT username FROM Credentials WHERE username = ?", (username,))
+                        if cur.fetchone():
+                            st.error("Username already exists. Please choose another.")
+                        else:
+                            # Insert into Credentials table
+                            cur.execute("INSERT INTO Credentials (username, password, user_type) VALUES (?, ?, 'customer')", 
+                                      (username, password))
+                            
+                            # Get the customer_id (should be the same as the last row id)
+                            cur.execute("SELECT last_insert_rowid()")
+                            customer_id = cur.fetchone()[0]
+                            
+                            # Insert into Customer table
+                            cur.execute("""
+                                INSERT INTO Customer (customer_id, username, first_name, last_name, email, phone)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            """, (customer_id, username, first_name, last_name, email, phone))
+                            
+                            conn.commit()
+                            st.success("Customer account created successfully! You can now log in.")
+                    except Exception as e:
+                        st.error(f"Error creating account: {e}")
+    
+    with tab2:
+        st.subheader("Homeowner Registration")
+        with st.form("homeowner_signup_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
+            first_name = st.text_input("First Name")
+            last_name = st.text_input("Last Name")
+            email = st.text_input("Email")
+            phone_number = st.text_input("Phone Number")
+            
+            if st.form_submit_button("Sign Up as Homeowner"):
+                if not username or not password or not confirm_password or not first_name or not last_name or not email or not phone_number:
+                    st.error("All fields are required.")
+                elif password != confirm_password:
+                    st.error("Passwords do not match.")
+                else:
+                    try:
+                        # Check if username already exists
+                        cur = conn.cursor()
+                        cur.execute("SELECT username FROM Credentials WHERE username = ?", (username,))
+                        if cur.fetchone():
+                            st.error("Username already exists. Please choose another.")
+                        else:
+                            # Insert into Credentials table
+                            cur.execute("INSERT INTO Credentials (username, password, user_type) VALUES (?, ?, 'owner')", 
+                                      (username, password))
+                            
+                            # Get the owner_id (should be the same as the last row id)
+                            cur.execute("SELECT last_insert_rowid()")
+                            owner_id = cur.fetchone()[0]
+                            
+                            # Insert into HomeOwner table
+                            cur.execute("""
+                                INSERT INTO HomeOwner (owner_id, username, first_name, last_name, email, phone_number, verification_status)
+                                VALUES (?, ?, ?, ?, ?, ?, 'pending')
+                            """, (owner_id, username, first_name, last_name, email, phone_number))
+                            
+                            conn.commit()
+                            st.success("Homeowner account created successfully! You can now log in. Note: Your account will be pending verification by an admin.")
+                    except Exception as e:
+                        st.error(f"Error creating account: {e}")
+
 # -------------------------
 # 3. Main App: Login and Routing
 # -------------------------
@@ -850,37 +943,45 @@ def main():
         st.session_state.user_type = None
 
     if not st.session_state.logged_in:
-        st.sidebar.header("Login")
-        username = st.sidebar.text_input("Username")
-        password = st.sidebar.text_input("Password", type="password")
+        # Create tabs for login and signup
+        tab1, tab2 = st.tabs(["🔑 Login", "📝 Sign Up"])
+        
+        with tab1:
+            st.sidebar.header("Login")
+            username = st.sidebar.text_input("Username")
+            password = st.sidebar.text_input("Password", type="password")
 
-        if st.sidebar.button("Login"):
-            valid, user_type = check_credentials(conn, username, password)
-            if valid:
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.user_type = user_type
-                st.success(f"Logged in as {user_type}!")
-                st.rerun()  # Apply login state immediately
-            else:
-                st.error("Invalid username or password.")
+            if st.sidebar.button("Login"):
+                valid, user_type = check_credentials(conn, username, password)
+                if valid:
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    st.session_state.user_type = user_type
+                    st.success(f"Logged in as {user_type}!")
+                    st.rerun()  # Apply login state immediately
+                else:
+                    st.error("Invalid username or password.")
 
-        st.sidebar.markdown("#### Sample Credentials")
-        st.sidebar.markdown(
-            """
-            **Admin:**  
-            - Username: admin.alex  
-            - Password: admin001  
+            st.sidebar.markdown("#### Sample Credentials")
+            st.sidebar.markdown(
+                """
+                **Admin:**  
+                - Username: admin.alex  
+                - Password: admin001  
 
-            **Customer:**  
-            - Username: john.doe  
-            - Password: pass123  
+                **Customer:**  
+                - Username: john.doe  
+                - Password: pass123  
 
-            **Homeowner:**  
-            - Username: owner.tom  
-            - Password: owner001  
-            """
-        )
+                **Homeowner:**  
+                - Username: owner.tom  
+                - Password: owner001  
+                """
+            )
+        
+        with tab2:
+            sign_up(conn)
+            
         st.stop()
     else:
         # Logout button
