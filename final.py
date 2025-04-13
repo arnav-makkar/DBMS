@@ -25,7 +25,7 @@ st.markdown("""
         background-color: #45a049;
     }
     .stSelectbox, .stTextInput, .stNumberInput {
-        background-color: #262730;
+        background-color: #0E1117;
         color: #FFFFFF;
         border-radius: 5px;
     }
